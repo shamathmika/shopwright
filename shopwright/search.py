@@ -16,11 +16,12 @@ class Hit:
     bm25_rank: int | None = None
 
 class Searcher:
-    def __init__(self, ef_search: int = 64):
+    def __init__(self,index:str = "flat", ef_search: int = 64):
         self.catalog = pd.read_parquet(DATA / "catalog.parquet")
         self.model = SentenceTransformer(EMBED_MODEL, device="mps")
-        self.index = faiss.read_index(str(DATA / "hnsw.index"))
-        self.index.hnsw.efSearch = ef_search
+        self.index = faiss.read_index(str(DATA / "{index}.index"))
+        if index == "hnsw":
+            self.index.hnsw.efSearch = ef_search
         self.bm25 = bm25s.BM25.load(str(DATA / "bm25"))
         self.stemmer = Stemmer.Stemmer("english")
 
