@@ -1,7 +1,9 @@
 from collections import Counter, defaultdict
 import orjson
 
-META = "data/meta_Electronics.jsonl"
+from shopwright.config import DATA
+
+META = DATA / "meta_Electronics.jsonl"
 SLICES = {
     "Headphones, Earbuds & Accessories > Headphones & Earbuds",
     "Portable Audio & Video > Portable Speakers & Docks",

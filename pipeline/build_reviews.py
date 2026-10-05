@@ -1,12 +1,11 @@
 import heapq
-from pathlib import Path
 import orjson
 import pandas as pd
+from shopwright.config import DATA
 
-ROOT = Path(__file__).resolve().parent
-REVIEWS = ROOT / "data" / "Electronics.jsonl"
-CATALOG = ROOT / "data" / "catalog.parquet"
-OUT = ROOT / "data" / "reviews.parquet"
+REVIEWS = DATA / "Electronics.jsonl"
+CATALOG = DATA / "catalog.parquet"
+OUT = DATA / "reviews.parquet"
 PER_PRODUCT = 30
 
 wanted = set(pd.read_parquet(CATALOG, columns=["parent_asin"])["parent_asin"])

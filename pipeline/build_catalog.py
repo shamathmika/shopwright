@@ -1,10 +1,9 @@
-from pathlib import Path
 import orjson
 import pandas as pd
+from shopwright.config import DATA
 
-ROOT = Path(__file__).resolve().parent
-META = ROOT / "data" / "meta_Electronics.jsonl"
-OUT = ROOT / "data" / "catalog.parquet"
+META = DATA / "meta_Electronics.jsonl"
+OUT = DATA / "catalog.parquet"
 
 SLICES = {
     "Headphones, Earbuds & Accessories > Headphones & Earbuds": "headphones",
@@ -45,6 +44,11 @@ with open(META, "rb") as f:
         })
 
 df = pd.DataFrame(rows)
+df = (df.sort_values("n_ratings", ascending=False)
+        .drop_duplicates("title")
+        .sort_index()
+        .reset_index(drop=True))
+
 df.to_parquet(OUT, index=False)
 print(df.shape)
 print(df["kind"].value_counts())

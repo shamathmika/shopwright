@@ -1,7 +1,9 @@
 from collections import Counter
 import orjson
 
-META = "data/meta_Electronics.jsonl"
+from shopwright.config import DATA
+
+META = DATA / "meta_Electronics.jsonl"
 
 cats = Counter()
 specs = Counter()

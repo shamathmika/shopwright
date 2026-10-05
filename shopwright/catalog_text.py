@@ -1,4 +1,5 @@
 import orjson
+from shopwright.config import DATA
 
 SKIP = {
     "Best Sellers Rank", "Date First Available", "Is Discontinued By Manufacturer",
@@ -17,7 +18,7 @@ def product_text(row) -> str:
 
 if __name__ == "__main__":
     import pandas as pd
-    df = pd.read_parquet("data/catalog.parquet")
+    df = pd.read_parquet(DATA / "catalog.parquet")
     texts = df.apply(product_text, axis=1)
     print(texts.str.len().describe())
     for kind in df["kind"].unique():
