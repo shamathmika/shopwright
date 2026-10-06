@@ -1,7 +1,15 @@
+import json
+import operator
 import time
+from functools import cache
+from typing import Annotated, TypedDict
 
-from shopwright.config import LLM_EXTRA_BODY, LLM_MODEL
-from shopwright.resources import get_llm
+from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_openai import ChatOpenAI
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.message import add_messages
+
+from shopwright.config import LLM_API_KEY, LLM_BASE_URL, LLM_EXTRA_BODY, LLM_MODEL
 from shopwright.tools import TOOLS, run_tool
 
 SYSTEM_PROMPT = """You are a shopping assistant for an electronics store selling headphones, speakers, cameras and computers.
@@ -15,27 +23,78 @@ Check reviews for at most 3 products.
 """
 
 MAX_STEPS = 8
+FINALIZE_PROMPT = "Step limit reached. Answer now using only the tool results above."
+
+
+class AgentState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
+    steps: int
+    trace: Annotated[list[dict], operator.add]
+    hit_limit: bool
+
+
+@cache
+def get_chat_model() -> ChatOpenAI:
+    return ChatOpenAI(model=LLM_MODEL, base_url=LLM_BASE_URL, api_key=LLM_API_KEY,
+                      temperature=0, extra_body=LLM_EXTRA_BODY)
+
+
+def agent_node(state: AgentState) -> dict:
+    reply = get_chat_model().bind_tools(TOOLS).invoke(state["messages"])
+    return {"messages": [reply], "steps": state["steps"] + 1}
+
+
+def tools_node(state: AgentState) -> dict:
+    last: AIMessage = state["messages"][-1]
+    calls = [(c["id"], c["name"], json.dumps(c["args"])) for c in last.tool_calls]
+    calls += [(c["id"], c["name"], c["args"] or "") for c in last.invalid_tool_calls]
+    results, trace = [], []
+    for call_id, name, args in calls:
+        t0 = time.perf_counter()
+        content = run_tool(name, args)
+        trace.append({"step": state["steps"], "tool": name, "args": args,
+                      "error": content.startswith('{"error"'),
+                      "ms": round((time.perf_counter() - t0) * 1000)})
+        results.append(ToolMessage(content=content, tool_call_id=call_id))
+    return {"messages": results, "trace": trace}
+
+
+def finalize_node(state: AgentState) -> dict:
+    nudge = HumanMessage(FINALIZE_PROMPT)
+    reply = get_chat_model().invoke(state["messages"] + [nudge])
+    return {"messages": [nudge, reply], "hit_limit": True}
+
+
+def after_agent(state: AgentState) -> str:
+    last: AIMessage = state["messages"][-1]
+    return "tools" if last.tool_calls or last.invalid_tool_calls else END
+
+
+def after_tools(state: AgentState) -> str:
+    return "agent" if state["steps"] < MAX_STEPS else "finalize"
+
+
+def build_graph():
+    graph = StateGraph(AgentState)
+    graph.add_node("agent", agent_node)
+    graph.add_node("tools", tools_node)
+    graph.add_node("finalize", finalize_node)
+    graph.add_edge(START, "agent")
+    graph.add_conditional_edges("agent", after_agent, ["tools", END])
+    graph.add_conditional_edges("tools", after_tools, ["agent", "finalize"])
+    graph.add_edge("finalize", END)
+    return graph.compile()
+
+
+AGENT = build_graph()
+
+
+def initial_state(question: str) -> AgentState:
+    return {"messages": [SystemMessage(SYSTEM_PROMPT), HumanMessage(question)],
+            "steps": 0, "trace": [], "hit_limit": False}
 
 
 def run_agent(question: str) -> dict:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": question}]
-    trace = []
-    for step in range(1, MAX_STEPS + 1):
-        resp = get_llm().chat.completions.create(model=LLM_MODEL, messages=messages, tools=TOOLS,
-                                                 temperature=0, extra_body=LLM_EXTRA_BODY)
-        msg = resp.choices[0].message
-        messages.append(msg.model_dump(exclude_none=True))
-        if not msg.tool_calls:
-            return {"answer": msg.content, "steps": step, "trace": trace, "hit_limit": False}
-        for tc in msg.tool_calls:
-            t0 = time.perf_counter()
-            result = run_tool(tc.function.name, tc.function.arguments)
-            trace.append({"step": step, "tool": tc.function.name, "args": tc.function.arguments,
-                          "error": result.startswith('{"error"'),
-                          "ms": round((time.perf_counter() - t0) * 1000)})
-            messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
-    messages.append({"role": "user", "content": "Step limit reached. Answer now using only the tool results above."})
-    resp = get_llm().chat.completions.create(model=LLM_MODEL, messages=messages,
-                                             temperature=0, extra_body=LLM_EXTRA_BODY)
-    return {"answer": resp.choices[0].message.content, "steps": MAX_STEPS, "trace": trace, "hit_limit": True}
+    final = AGENT.invoke(initial_state(question), {"recursion_limit": 2 * MAX_STEPS + 5})
+    return {"answer": final["messages"][-1].content, "steps": final["steps"],
+            "trace": final["trace"], "hit_limit": final["hit_limit"]}
