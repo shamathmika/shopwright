@@ -8,3 +8,5 @@ data/
 graphify-out/
 __pycache__/
 *.egg-info/
+
+.env
