@@ -14,9 +14,11 @@ TOOL_FUNCS = {
 TOOLS = [
     {"type": "function", "function": {
         "name": "search_products",
-        "description": "Free-text search over the electronics catalog (headphones, speakers, cameras, computers). "
-                       "Use for open-ended requests with no budget, brand or rating constraint. "
-                       "Returns short product cards with asin, price and rating.",
+        "description": "Find products that meet hard constraints: product kind, price range, brand, minimum rating. "
+                       "Use this whenever the shopper states a budget, brand or rating requirement. "
+                       "Optionally ranks matches by a free-text query. Returns total_matches and product cards. "
+                       "Kinds are broad (computers includes laptops, tablets, desktops and smart displays), "
+                       "so always set query to the specific product and use, e.g. 'laptop for college'.",
         "parameters": {"type": "object", "properties": {
             "query": {"type": "string", "description": "What the shopper wants, in plain words"},
             "k": {"type": "integer", "description": "Number of results, 1-10. Default 5."},
@@ -26,7 +28,9 @@ TOOLS = [
         "name": "filter_products",
         "description": "Find products that meet hard constraints: product kind, price range, brand, minimum rating. "
                        "Use this whenever the shopper states a budget, brand or rating requirement. "
-                       "Optionally ranks matches by a free-text query. Returns total_matches and product cards.",
+                       "Optionally ranks matches by a free-text query. Returns total_matches and product cards. "
+                       "Kinds are broad (computers includes laptops, tablets, desktops and smart displays), "
+                       "so always set query to the specific product and use, e.g. 'laptop for college'.",
         "parameters": {"type": "object", "properties": {
             "kind": {"type": "string", "enum": sorted(KINDS)},
             "min_price": {"type": "number", "description": "Lowest price in USD"},
