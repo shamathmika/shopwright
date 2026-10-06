@@ -1,4 +1,5 @@
 from collections import Counter, defaultdict
+
 import orjson
 
 from shopwright.config import DATA

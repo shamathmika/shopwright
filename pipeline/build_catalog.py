@@ -1,5 +1,6 @@
 import orjson
 import pandas as pd
+
 from shopwright.config import DATA
 
 META = DATA / "meta_Electronics.jsonl"

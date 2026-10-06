@@ -1,12 +1,16 @@
 from dataclasses import dataclass
+
 import bm25s
 import faiss
+import numpy as np
 import pandas as pd
 import Stemmer
-from sentence_transformers import SentenceTransformer
-from shopwright.config import DATA, EMBED_MODEL, QUERY_PREFIX
+
+from shopwright.config import DATA, QUERY_PREFIX
+from shopwright.embedding import load_embedder
 
 RRF_K = 60
+
 
 @dataclass
 class Hit:
@@ -15,19 +19,23 @@ class Hit:
     dense_rank: int | None = None
     bm25_rank: int | None = None
 
+
 class Searcher:
-    def __init__(self,index:str = "flat", ef_search: int = 64):
+    def __init__(self, index: str = "flat", ef_search: int = 64):
         self.catalog = pd.read_parquet(DATA / "catalog.parquet")
-        self.model = SentenceTransformer(EMBED_MODEL, device="mps")
-        self.index = faiss.read_index(str(DATA / "{index}.index"))
+        self.emb = np.load(DATA / "embeddings.npy")
+        self.model = load_embedder()
+        self.index = faiss.read_index(str(DATA / f"{index}.index"))
         if index == "hnsw":
             self.index.hnsw.efSearch = ef_search
         self.bm25 = bm25s.BM25.load(str(DATA / "bm25"))
         self.stemmer = Stemmer.Stemmer("english")
 
+    def embed_query(self, query: str) -> np.ndarray:
+        return self.model.encode([QUERY_PREFIX + query], normalize_embeddings=True)[0]
+
     def dense(self, query: str, n: int) -> list[int]:
-        q = self.model.encode([QUERY_PREFIX + query], normalize_embeddings=True)
-        _, ids = self.index.search(q, n)
+        _, ids = self.index.search(self.embed_query(query)[None, :], n)
         return [int(i) for i in ids[0] if i != -1]
 
     def keyword(self, query: str, n: int) -> list[int]:
@@ -44,12 +52,3 @@ class Searcher:
             h.score += 1 / (RRF_K + rank)
             h.bm25_rank = rank
         return sorted(hits.values(), key=lambda h: h.score, reverse=True)[:k]
-
-if __name__ == "__main__":
-    s = Searcher()
-    for q in ["GWTN156", "noise cancelling earbuds for running",
-              "something to take photos on vacation", "laptop under $500"]:
-        print(f"\n=== {q}")
-        for h in s.search(q, k=5):
-            r = s.catalog.iloc[h.row]
-            print(f"  dense={h.dense_rank!s:>4} bm25={h.bm25_rank!s:>4}  ${r.price:>8.2f}  {r.title[:65]}")

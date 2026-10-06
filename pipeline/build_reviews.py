@@ -1,6 +1,8 @@
 import heapq
+
 import orjson
 import pandas as pd
+
 from shopwright.config import DATA
 
 REVIEWS = DATA / "Electronics.jsonl"

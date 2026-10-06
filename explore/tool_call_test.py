@@ -1,5 +1,7 @@
 import json
+
 from openai import OpenAI
+
 from shopwright.config import LLM_API_KEY, LLM_BASE_URL, LLM_EXTRA_BODY, LLM_MODEL
 
 client = OpenAI(base_url=LLM_BASE_URL, api_key=LLM_API_KEY)

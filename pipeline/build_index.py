@@ -1,6 +1,8 @@
 import time
+
 import faiss
 import numpy as np
+
 from shopwright.config import DATA
 
 EMB = DATA / "embeddings.npy"

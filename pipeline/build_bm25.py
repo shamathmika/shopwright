@@ -1,6 +1,7 @@
 import bm25s
 import pandas as pd
 import Stemmer
+
 from shopwright.catalog_text import product_text
 from shopwright.config import DATA
 

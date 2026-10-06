@@ -1,9 +1,11 @@
 import time
+
 import faiss
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
-from shopwright.config import DATA, EMBED_MODEL, QUERY_PREFIX
+
+from shopwright.config import DATA, QUERY_PREFIX
+from shopwright.embedding import load_embedder
 
 N_QUERIES = 1000
 K = 10
@@ -12,7 +14,7 @@ EF_VALUES = [8, 16, 32, 64, 128, 256]
 titles = pd.read_parquet(DATA / "reviews.parquet", columns=["title"])["title"]
 titles = titles[titles.str.len() > 15].sample(N_QUERIES, random_state=0).tolist()
 
-model = SentenceTransformer(EMBED_MODEL, device="mps")
+model = load_embedder()
 q = model.encode([QUERY_PREFIX + t for t in titles], normalize_embeddings=True).astype(np.float32)
 
 faiss.omp_set_num_threads(1)

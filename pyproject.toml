@@ -7,5 +7,5 @@ name = "shopwright"
 version = "0.1.0"
 requires-python = ">=3.11"
 
-[tool.setuptools]
-packages = ["shopwright"]
+[tool.setuptools.packages.find]
+include = ["shopwright*"]
