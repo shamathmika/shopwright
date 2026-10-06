@@ -8,6 +8,8 @@ from shopwright.catalog_text import SKIP
 from shopwright.config import KINDS
 from shopwright.resources import get_searcher
 
+EMPTY_VALUES = {"", "none", "null", "any", "all"}
+
 
 def product_card(row) -> dict:
     return {
@@ -33,6 +35,8 @@ def filter_products(kind: str | None = None, min_price: float | None = None,
                     k: int = 5) -> dict:
     s = get_searcher()
     df = s.catalog
+    if brand and brand.strip().lower() in EMPTY_VALUES:
+        brand = None
     if kind and kind not in KINDS:
         return {"error": f"unknown kind {kind!r}; use one of {sorted(KINDS)}"}
 

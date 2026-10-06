@@ -1,5 +1,6 @@
 import json
 import operator
+import re
 import time
 from functools import cache
 from typing import Annotated, TypedDict
@@ -20,10 +21,15 @@ If nothing matches, say so and suggest loosening a constraint.
 Keep answers short.
 When you need the same tool for several products, request all of those calls in one turn.
 Check reviews for at most 3 products.
+Every time you mention a product, write its asin from the tool results in parentheses right after its name, in this format: Product Name (B0EXAMPLE1). B0EXAMPLE1 is only a format example, never a real asin.
+If the user names a specific product, find it with search_products first. Never guess an asin.
+If the answer depends on what reviewers say (for example "best reviews for", "complaints", "what people think"), call review_summary. Do not answer from star ratings alone.
 """
 
 MAX_STEPS = 8
 FINALIZE_PROMPT = "Step limit reached. Answer now using only the tool results above."
+ASIN_IN_RESULT = re.compile(r'"asin": "([^"]+)"')
+MAX_TRACE_RESULT_CHARS = 4000
 
 
 class AgentState(TypedDict):
@@ -54,6 +60,8 @@ def tools_node(state: AgentState) -> dict:
         content = run_tool(name, args)
         trace.append({"step": state["steps"], "tool": name, "args": args,
                       "error": content.startswith('{"error"'),
+                      "asins": list(dict.fromkeys(ASIN_IN_RESULT.findall(content))),
+                      "result": content[:MAX_TRACE_RESULT_CHARS],
                       "ms": round((time.perf_counter() - t0) * 1000)})
         results.append(ToolMessage(content=content, tool_call_id=call_id))
     return {"messages": results, "trace": trace}
