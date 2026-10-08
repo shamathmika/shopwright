@@ -18,8 +18,7 @@ Press Enter with no input to skip an item, or type q to quit (progress is saved)
 def sample(rows: list[dict]) -> list[dict]:
     df = pd.DataFrame(rows)
     frac = SAMPLE_SIZE / len(df)
-    picked = (df.groupby("category", group_keys=False)
-                .apply(lambda g: g.sample(min(len(g), max(1, round(len(g) * frac))), random_state=SEED)))
+    picked = df.groupby("category").sample(frac=min(1.0, frac), random_state=SEED)
     if len(picked) > SAMPLE_SIZE:
         picked = picked.sample(SAMPLE_SIZE, random_state=SEED)
     return picked.sort_values("id").to_dict(orient="records")

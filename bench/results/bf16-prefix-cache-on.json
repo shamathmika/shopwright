@@ -1,0 +1,47 @@
+{
+  "label": "bf16-prefix-cache-on",
+  "levels": [
+    {
+      "users": 1,
+      "requests": 20,
+      "error_rate": 0.0,
+      "latency_p50_s": 6.15,
+      "latency_p95_s": 10.52,
+      "ttft_p50_s": 1.2,
+      "ttft_p95_s": 7.71,
+      "throughput_rps": 0.173,
+      "mean_steps": 2.5,
+      "requests_with_tool_errors": 7,
+      "recovered_after_tool_error": 7,
+      "errors": []
+    },
+    {
+      "users": 8,
+      "requests": 24,
+      "error_rate": 0.0,
+      "latency_p50_s": 6.36,
+      "latency_p95_s": 12.42,
+      "ttft_p50_s": 1.34,
+      "ttft_p95_s": 6.93,
+      "throughput_rps": 0.914,
+      "mean_steps": 2.33,
+      "requests_with_tool_errors": 7,
+      "recovered_after_tool_error": 7,
+      "errors": []
+    },
+    {
+      "users": 32,
+      "requests": 96,
+      "error_rate": 0.0,
+      "latency_p50_s": 16.39,
+      "latency_p95_s": 28.22,
+      "ttft_p50_s": 3.47,
+      "ttft_p95_s": 22.01,
+      "throughput_rps": 1.529,
+      "mean_steps": 2.31,
+      "requests_with_tool_errors": 27,
+      "recovered_after_tool_error": 27,
+      "errors": []
+    }
+  ]
+}

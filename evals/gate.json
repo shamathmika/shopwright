@@ -1,0 +1,8 @@
+{
+  "baseline": "vllm-bf16",
+  "candidate": "vllm-bf16",
+  "min_success": 0.65,
+  "max_success_drop": 0.03,
+  "max_test_success_drop": 0.03,
+  "max_invented_increase": 0.01
+}

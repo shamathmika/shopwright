@@ -1,0 +1,47 @@
+{
+  "label": "awq-prefix-cache-on",
+  "levels": [
+    {
+      "users": 1,
+      "requests": 20,
+      "error_rate": 0.0,
+      "latency_p50_s": 1.65,
+      "latency_p95_s": 3.33,
+      "ttft_p50_s": 0.54,
+      "ttft_p95_s": 0.75,
+      "throughput_rps": 0.545,
+      "mean_steps": 2.05,
+      "requests_with_tool_errors": 7,
+      "recovered_after_tool_error": 7,
+      "errors": []
+    },
+    {
+      "users": 8,
+      "requests": 24,
+      "error_rate": 0.0,
+      "latency_p50_s": 3.42,
+      "latency_p95_s": 10.42,
+      "ttft_p50_s": 0.94,
+      "ttft_p95_s": 6.94,
+      "throughput_rps": 1.553,
+      "mean_steps": 2.0,
+      "requests_with_tool_errors": 7,
+      "recovered_after_tool_error": 7,
+      "errors": []
+    },
+    {
+      "users": 32,
+      "requests": 96,
+      "error_rate": 0.0,
+      "latency_p50_s": 6.45,
+      "latency_p95_s": 18.87,
+      "ttft_p50_s": 3.01,
+      "ttft_p95_s": 13.33,
+      "throughput_rps": 2.653,
+      "mean_steps": 1.96,
+      "requests_with_tool_errors": 29,
+      "recovered_after_tool_error": 29,
+      "errors": []
+    }
+  ]
+}

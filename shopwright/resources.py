@@ -1,14 +1,18 @@
 from functools import cache
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from openai import OpenAI
 
 from shopwright.config import DATA, LLM_API_KEY, LLM_BASE_URL
-from shopwright.search import Searcher
+
+if TYPE_CHECKING:
+    from shopwright.search import Searcher
 
 
 @cache
-def get_searcher() -> Searcher:
+def get_searcher() -> "Searcher":
+    from shopwright.search import Searcher
     return Searcher()
 
 

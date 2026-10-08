@@ -1,0 +1,65 @@
+{
+  "run": "vllm-bf16",
+  "n": 50,
+  "pass_threshold": 4,
+  "faithfulness": {
+    "exact_agreement": 0.54,
+    "within_1": 0.86,
+    "spearman": 0.449,
+    "pass_agreement": 0.86,
+    "pass_kappa": 0.521,
+    "mean_human": 4.7,
+    "mean_judge": 4.18,
+    "judge_stricter_than_human": 20,
+    "judge_looser_than_human": 3
+  },
+  "overall": {
+    "exact_agreement": 0.46,
+    "within_1": 0.88,
+    "spearman": 0.705,
+    "pass_agreement": 0.82,
+    "pass_kappa": 0.633,
+    "mean_human": 3.54,
+    "mean_judge": 3.5,
+    "judge_stricter_than_human": 14,
+    "judge_looser_than_human": 13
+  },
+  "large_disagreements": [
+    {
+      "id": "q022",
+      "overall_human": 5,
+      "overall_judge": 2,
+      "note": ""
+    },
+    {
+      "id": "q033",
+      "overall_human": 3,
+      "overall_judge": 5,
+      "note": ""
+    },
+    {
+      "id": "q038",
+      "overall_human": 2,
+      "overall_judge": 4,
+      "note": ""
+    },
+    {
+      "id": "q142",
+      "overall_human": 1,
+      "overall_judge": 4,
+      "note": "number of reviews wrong"
+    },
+    {
+      "id": "q156",
+      "overall_human": 5,
+      "overall_judge": 2,
+      "note": ""
+    },
+    {
+      "id": "q199",
+      "overall_human": 5,
+      "overall_judge": 3,
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    env:
+      LLM_BASE_URL: http://localhost:0/v1
+      LLM_API_KEY: ci
+      LLM_MODEL: ci
+      LLM_EXTRA_BODY: "{}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-ci.txt && pip install -e . --no-deps
+      - name: Unit tests
+        run: pytest -q tests
+      - name: Eval gate
+        run: python evals/gate.py

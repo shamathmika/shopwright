@@ -82,7 +82,7 @@ def main():
     run_dir = RUNS / args.run
     rows = [json.loads(line) for line in open(run_dir / "results.jsonl")][: args.limit]
     out_path = run_dir / "judge.jsonl"
-    done = {json.loads(line)["id"] for line in open(out_path)} if out_path.exists() else set()
+    done = {r["id"] for r in map(json.loads, open(out_path)) if r["judge"]} if out_path.exists() else set()
     todo = [r for r in rows if r["id"] not in done]
     print(f"judging {len(todo)} of {len(rows)} with {JUDGE_MODEL}")
 

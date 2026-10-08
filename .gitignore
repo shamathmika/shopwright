@@ -9,4 +9,5 @@ graphify-out/
 __pycache__/
 *.egg-info/
 
+*.tar.gz
 .env
