@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: shopwright
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: {app: vllm}
+  template:
+    metadata:
+      labels: {app: vllm}
+    spec:
+      runtimeClassName: nvidia
+      enableServiceLinks: false
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - --model=Qwen/Qwen3-8B
+            - --served-model-name=qwen3-8b
+            - --max-model-len=8192
+            - --gpu-memory-utilization=0.90
+            - --enable-auto-tool-choice
+            - --tool-call-parser=hermes
+          env:
+            - name: VLLM_API_KEY
+              valueFrom: {secretKeyRef: {name: llm, key: LLM_API_KEY}}
+            - {name: HF_HOME, value: /cache/hf}
+          ports: [{containerPort: 8000}]
+          resources:
+            limits: {nvidia.com/gpu: 1}
+          startupProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 5
+          volumeMounts:
+            - {name: hf-cache, mountPath: /cache/hf}
+            - {name: shm, mountPath: /dev/shm}
+      volumes:
+        - name: hf-cache
+          hostPath: {path: /var/lib/shopwright/hf, type: DirectoryOrCreate}
+        - name: shm
+          emptyDir: {medium: Memory, sizeLimit: 2Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm
+  namespace: shopwright
+spec:
+  selector: {app: vllm}
+  ports: [{port: 8000, targetPort: 8000}]

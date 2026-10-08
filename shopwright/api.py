@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from shopwright.agent import AGENT, MAX_STEPS, initial_state, run_agent
+from shopwright.config import RETRIEVAL_URL
 from shopwright.resources import get_reviews, get_searcher
 
 ANSWER_NODES = {"agent", "finalize"}
@@ -20,8 +21,9 @@ class ChatRequest(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    get_searcher()
-    get_reviews()
+    if not RETRIEVAL_URL:
+        get_searcher()
+        get_reviews()
     yield
 
 

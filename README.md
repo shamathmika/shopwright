@@ -16,19 +16,26 @@ To rebuild: download `meta_Electronics.jsonl` and `Electronics.jsonl` into `data
 
 ## Architecture
 
+Three services plus the model server, each its own Kubernetes Deployment and Service:
+
 ```
-client ──SSE──► FastAPI (/chat/stream) ──► LangGraph agent ──► vLLM (Qwen3-8B, OpenAI-compatible API)
-                                              │
-                                              └──► tools: search · filter · compare · review_summary
-                                                     │
-                                                     ├── hybrid search: bge-small embeddings (exact flat index) + BM25, fused with RRF
+browser ──► web (Next.js) ──SSE──► agent (FastAPI + LangGraph) ──► vLLM (Qwen3-8B, GPU)
+                                        │
+                                        └──HTTP──► retrieval (FastAPI): search · filter · compare · review_summary
+                                                     ├── bge-small embeddings (in-process, or Triton via TRITON_URL)
+                                                     ├── exact flat index + BM25, fused with RRF
                                                      └── review_summary makes its own LLM call over up to 15 reviews
 ```
 
 | Path | What |
 |---|---|
 | `pipeline/` | offline data build: catalog, reviews, embeddings, indexes |
-| `shopwright/` | runtime package: search, tools, agent, API |
+| `shopwright/` | runtime package: search, tools, agent API (`api.py`), retrieval API (`retrieval_api.py`) |
+| `web/` | Next.js chat page that renders the agent's SSE stream (tool steps, then tokens) |
+| `docker/`, `web/Dockerfile` | one image per service; the agent image does not include PyTorch |
+| `k8s/` | Kustomize manifests: `base` (retrieval, agent, web), `gpu` (adds vLLM with a GPU request and startup/readiness probes), `local` (uses Ollama on the host) |
+| `serving/` | Triton model repositories: Qwen3-8B on the vLLM backend, bge-small as ONNX; benchmarks against the direct paths |
+| `deploy/` | `kind.yaml` for a local cluster, `gpu_vm.sh` for a single-node k3s GPU machine |
 | `evals/` | eval set, graders, judge, human labeling, agreement, CI gate (see `evals/README.md`) |
 | `bench/` | HNSW recall benchmark, load test, vLLM benchmark matrix |
 | `tests/` | unit tests run in CI |
@@ -93,6 +100,30 @@ Each level sends 20, 24 and 96 requests from 1, 8 and 32 concurrent users throug
 ## CI gate
 
 `.github/workflows/ci.yml` runs unit tests (tool schemas, dispatcher error handling, graders) and `evals/gate.py`. The gate fails if a committed eval run drops more than 3 points of task success (overall or test split), falls below 0.65, invents more product IDs than the baseline, or used a different eval set. CI has no GPU, so it does not run the agent: an eval run happens on the GPU, its results are committed, and CI enforces the thresholds. Against the BF16 baseline, the AWQ run fails the gate on three checks.
+
+## Deployment
+
+**Verified locally (kind, no GPU):** `kubectl apply -k k8s/local` brings up web, agent and retrieval, with Ollama on the host as the LLM. A question through the web endpoint flows web → agent → retrieval over cluster DNS. With the retrieval pod deleted mid-request, the agent returned a graceful "unable to access product data" answer instead of failing; Kubernetes replaced the pod and the readiness probe held traffic until it was healthy again (about 12 s).
+
+**GPU (`k8s/gpu`, `deploy/gpu_vm.sh`):** single-node k3s on one NVIDIA A10 (24 GB) with the NVIDIA device plugin. vLLM runs as its own Deployment with `nvidia.com/gpu: 1`, a startup probe for the slow model load, a readiness probe and the `Recreate` update strategy for the single GPU. Questions through the web service flow web → agent → retrieval and vLLM.
+
+**Triton, LLM:** the same Qwen3-8B served through Triton's vLLM backend (`serving/triton_vllm`), with identical prompts and 128 output tokens (A10):
+
+| | 1 request: p50 | 16 concurrent: p50 | 16 concurrent: throughput |
+|---|---|---|---|
+| vLLM (in Kubernetes) | 4.25 s | 4.87 s | 3.29 req/s |
+| Triton vLLM backend | 4.27 s | 4.87 s | 3.29 req/s |
+
+Triton adds no measurable overhead over vLLM here, while adding its model repository, metrics and multi-model serving.
+
+**Triton, embeddings:** bge-small exported to ONNX with CLS pooling and normalization in the graph, served by Triton's ONNX Runtime backend with dynamic batching (A10, 500 queries):
+
+| | single query p50 | p95 | 32 threads throughput |
+|---|---|---|---|
+| sentence-transformers, in-process | 7.3 ms | 7.5 ms | 64 queries/s |
+| Triton (HTTP) | 4.8 ms | 5.3 ms | 431 queries/s |
+
+Outputs match (minimum cosine 1.0). The throughput gap comes from dynamic batching: Triton groups concurrent requests into one GPU call, while the in-process path runs them one at a time.
 
 ## Limitations
 

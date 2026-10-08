@@ -11,7 +11,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
 from shopwright.config import LLM_API_KEY, LLM_BASE_URL, LLM_EXTRA_BODY, LLM_MODEL
-from shopwright.tools import TOOLS, run_tool
+from shopwright.tools import TOOLS, call_tool
 
 SYSTEM_PROMPT = """You are a shopping assistant for an electronics store selling headphones, speakers, cameras and computers.
 Always use the tools to find products. Never invent products, prices or specs.
@@ -57,7 +57,7 @@ def tools_node(state: AgentState) -> dict:
     results, trace = [], []
     for call_id, name, args in calls:
         t0 = time.perf_counter()
-        content = run_tool(name, args)
+        content = call_tool(name, args)
         trace.append({"step": state["steps"], "tool": name, "args": args,
                       "error": content.startswith('{"error"'),
                       "asins": list(dict.fromkeys(ASIN_IN_RESULT.findall(content))),

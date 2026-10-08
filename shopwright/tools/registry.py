@@ -1,6 +1,9 @@
 import json
+from functools import cache
 
-from shopwright.config import KINDS
+import httpx
+
+from shopwright.config import KINDS, RETRIEVAL_URL
 from shopwright.tools.catalog import compare_products, filter_products, search_products
 from shopwright.tools.reviews import review_summary
 
@@ -76,3 +79,20 @@ def run_tool(name: str, arguments: str) -> str:
         except Exception as e:
             result = {"error": f"{name} failed: {type(e).__name__}: {e}"}
     return json.dumps(result)
+
+
+@cache
+def retrieval_client() -> httpx.Client:
+    return httpx.Client(base_url=RETRIEVAL_URL, timeout=120)
+
+
+def call_tool(name: str, arguments: str) -> str:
+    if not RETRIEVAL_URL:
+        return run_tool(name, arguments)
+    try:
+        r = retrieval_client().post(f"/tools/{name}", content=arguments or "{}")
+    except httpx.HTTPError as e:
+        return json.dumps({"error": f"retrieval service unreachable: {type(e).__name__}"})
+    if r.status_code != 200:
+        return json.dumps({"error": f"retrieval service returned HTTP {r.status_code}"})
+    return r.text

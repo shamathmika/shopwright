@@ -1,0 +1,11 @@
+resources:
+  - ../base
+  - runtimeclass.yaml
+  - vllm.yaml
+configMapGenerator:
+  - name: llm
+    behavior: merge
+    literals:
+      - LLM_BASE_URL=http://vllm:8000/v1
+      - LLM_MODEL=qwen3-8b
+      - 'LLM_EXTRA_BODY={"chat_template_kwargs":{"enable_thinking":false}}'

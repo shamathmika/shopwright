@@ -1,0 +1,12 @@
+name: "bge_small"
+backend: "onnxruntime"
+max_batch_size: 64
+input [
+  { name: "input_ids", data_type: TYPE_INT64, dims: [ -1 ] },
+  { name: "attention_mask", data_type: TYPE_INT64, dims: [ -1 ] }
+]
+output [
+  { name: "embedding", data_type: TYPE_FP32, dims: [ 384 ] }
+]
+dynamic_batching { max_queue_delay_microseconds: 1000 }
+instance_group [ { kind: KIND_GPU, count: 1 } ]

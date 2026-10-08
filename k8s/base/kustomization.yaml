@@ -1,0 +1,12 @@
+namespace: shopwright
+resources:
+  - namespace.yaml
+  - retrieval.yaml
+  - agent.yaml
+  - web.yaml
+configMapGenerator:
+  - name: llm
+    literals:
+      - RETRIEVAL_URL=http://retrieval:8000
+generatorOptions:
+  disableNameSuffixHash: true

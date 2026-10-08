@@ -1,0 +1,20 @@
+{
+  "target": "vllm",
+  "max_tokens": 128,
+  "levels": [
+    {
+      "workers": 1,
+      "requests": 16,
+      "p50_s": 4.25,
+      "p95_s": 4.26,
+      "throughput_rps": 0.24
+    },
+    {
+      "workers": 16,
+      "requests": 64,
+      "p50_s": 4.865,
+      "p95_s": 4.884,
+      "throughput_rps": 3.29
+    }
+  ]
+}

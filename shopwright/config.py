@@ -16,3 +16,4 @@ LLM_BASE_URL = os.environ["LLM_BASE_URL"]
 LLM_API_KEY = os.environ["LLM_API_KEY"]
 LLM_MODEL = os.environ["LLM_MODEL"]
 LLM_EXTRA_BODY = json.loads(os.environ["LLM_EXTRA_BODY"])
+RETRIEVAL_URL = os.environ.get("RETRIEVAL_URL")

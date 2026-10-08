@@ -1,0 +1,20 @@
+{
+  "target": "triton",
+  "max_tokens": 128,
+  "levels": [
+    {
+      "workers": 1,
+      "requests": 16,
+      "p50_s": 4.27,
+      "p95_s": 4.281,
+      "throughput_rps": 0.23
+    },
+    {
+      "workers": 16,
+      "requests": 64,
+      "p50_s": 4.87,
+      "p95_s": 4.873,
+      "throughput_rps": 3.29
+    }
+  ]
+}

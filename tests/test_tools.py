@@ -25,3 +25,12 @@ def test_unknown_tool_returns_error():
 def test_broken_json_returns_error():
     out = json.loads(run_tool("search_products", "{not json"))
     assert "not valid JSON" in out["error"]
+
+
+def test_unreachable_retrieval_service_returns_error(monkeypatch):
+    from shopwright.tools import registry
+    monkeypatch.setattr(registry, "RETRIEVAL_URL", "http://127.0.0.1:9")
+    registry.retrieval_client.cache_clear()
+    out = json.loads(registry.call_tool("search_products", '{"query": "x"}'))
+    registry.retrieval_client.cache_clear()
+    assert "unreachable" in out["error"]

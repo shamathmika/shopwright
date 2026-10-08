@@ -1,0 +1,9 @@
+*
+!docker/
+!shopwright/
+!data/catalog.parquet
+!data/reviews.parquet
+!data/embeddings.npy
+!data/flat.index
+!data/bm25/
+**/__pycache__

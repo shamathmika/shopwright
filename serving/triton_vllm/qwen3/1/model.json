@@ -1,0 +1,6 @@
+{
+  "model": "Qwen/Qwen3-8B",
+  "gpu_memory_utilization": 0.85,
+  "max_model_len": 8192,
+  "enable_prefix_caching": true
+}

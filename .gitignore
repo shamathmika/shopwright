@@ -11,3 +11,6 @@ __pycache__/
 
 *.tar.gz
 .env
+web/node_modules/
+web/.next/
+serving/models/*/1/*.onnx

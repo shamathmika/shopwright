@@ -1,0 +1,15 @@
+{
+  "device": "cuda",
+  "queries": 500,
+  "parity_min_cosine": 1.0,
+  "in_process": {
+    "p50_ms": 7.34,
+    "p95_ms": 7.54,
+    "throughput_32_threads_qps": 63.8
+  },
+  "triton_http": {
+    "p50_ms": 4.79,
+    "p95_ms": 5.27,
+    "throughput_32_threads_qps": 431.0
+  }
+}
